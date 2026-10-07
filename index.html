@@ -136,53 +136,74 @@
     </button>
   </div>
 
-  <script>
-    function sendMessage() {
+ <script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbwG2liWhM9iLIhemMIM9LuEOUb-mJq_3GeJNynbNY8LPX6FjXgn0bRc3wha_6N_eGy4MQ/exec";
 
-      const input = document.getElementById("messageInput");
-      const chat = document.getElementById("chat");
-      const welcome = document.getElementById("welcome");
+  async function sendMessage() {
+    const input = document.getElementById("messageInput");
+    const chat = document.getElementById("chat");
+    const welcome = document.getElementById("welcome");
 
-      const message = input.value.trim();
+    const message = input.value.trim();
 
-      if (!message) return;
+    if (!message) return;
 
-      if (welcome) {
-        welcome.remove();
-      }
-
-      const userMessage = document.createElement("div");
-      userMessage.className = "message user";
-      userMessage.textContent = message;
-
-      chat.appendChild(userMessage);
-
-      input.value = "";
-
-      setTimeout(() => {
-
-        const aiMessage = document.createElement("div");
-        aiMessage.className = "message ai";
-
-        aiMessage.textContent =
-          "Halo! Saya RenAi 🤖. Otak AI saya sedang kita pasang. Sebentar lagi saya bisa membantu tugas kuliah, menjelaskan materi, dan menganalisis pertanyaan.";
-
-        chat.appendChild(aiMessage);
-
-        chat.scrollTop = chat.scrollHeight;
-
-      }, 500);
+    if (welcome) {
+      welcome.remove();
     }
 
-    document.getElementById("messageInput")
-      .addEventListener("keypress", function(event) {
+    // Pesan user
+    const userMessage = document.createElement("div");
+    userMessage.className = "message user";
+    userMessage.textContent = message;
+    chat.appendChild(userMessage);
 
-        if (event.key === "Enter") {
-          sendMessage();
-        }
+    input.value = "";
 
+    // Pesan loading
+    const aiMessage = document.createElement("div");
+    aiMessage.className = "message ai";
+    aiMessage.textContent = "RenAi sedang berpikir... 🤖";
+    chat.appendChild(aiMessage);
+
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          question: message
+        })
       });
-  </script>
+
+      const data = await response.json();
+
+      if (data.success) {
+        aiMessage.textContent = data.answer;
+      } else {
+        aiMessage.textContent =
+          "Maaf bro, RenAi mengalami error: " + data.error;
+      }
+
+    } catch (error) {
+      aiMessage.textContent =
+        "Gagal terhubung ke RenAi Backend. Coba lagi.";
+      console.error(error);
+    }
+
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  document.getElementById("messageInput")
+    .addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    });
+</script>
 
 </body>
 </html>
